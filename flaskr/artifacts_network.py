@@ -30,13 +30,16 @@ class ArtifactsNetwork(network.Network):
         artifacts = {}
         pagerank = nx.pagerank(self.graph)
         sorted_pagerank = sorted(pagerank.items(), key=lambda x: x[1], reverse=True)  # Sort descending
-        rank = 1
+        rank = 0
+        last_rank_val = None
         for id, pr in sorted_pagerank:
+            if last_rank_val != pagerank[id]:  # Only increment if the pagerank value is different ie. not joint rank
+                rank += 1
+            last_rank_val = pagerank[id]
             artifacts[id] = {
                 "pagerank": pagerank[id],
                 "overall_rank": rank,
             }
-            rank += 1
         return artifacts
 
     def neo4j_to_network_artifact(self, records):
