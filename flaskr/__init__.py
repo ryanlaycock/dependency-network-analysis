@@ -24,7 +24,7 @@ def create_app(test_config=None):
         project_name = owner + "/" + repo
         artifact_deps = dependency_network.DependencyNetwork(project_name)
         if artifact_deps.is_empty():
-            return 404
+            return jsonify(""), 404
         artifacts = artifact_deps.get_artifacts()
         return jsonify(artifacts), 200
 
