@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
 import artifacts_network
 import dependency_network
+import functions
 
 app = Flask(__name__)
 """Flask URL -> endpoints"""
@@ -29,5 +30,5 @@ def get_project_artifacts(owner, repo):
 
 
 if __name__ == '__main__':
-    print("Starting dependency network analysis!")
-    app.run(host='0.0.0.0', debug=True)
+    print(functions.log_time(), "Starting dependency network analysis!")
+    app.run(host='0.0.0.0', port='5001', debug=True)

@@ -1,5 +1,6 @@
 import network
 import networkx as nx
+import functions
 
 
 class DependencyNetwork(network.Network):
@@ -14,7 +15,7 @@ class DependencyNetwork(network.Network):
         self.neo4j_to_network(dependents)
 
     def __fetch_dependency_data(self, project_name):
-        print("Fetching dependencies.")
+        print(functions.log_time(), "Fetching dependencies.")
         # Dependencies
         query = ("MATCH p = (parent:Project{id:$projectName})"
                  "-[:Contains*0..1]->(child:Artifact)"
@@ -25,7 +26,7 @@ class DependencyNetwork(network.Network):
             return result.records()
 
     def __fetch_dependent_data(self, project_name):
-        print("Fetching dependents.")
+        print(functions.log_time(), "Fetching dependents.")
         # Dependent projects
         query = ("MATCH p = (parent:Project{id:$projectName})"
                  "-[:Contains*0..1]->(child:Artifact)"
@@ -38,7 +39,7 @@ class DependencyNetwork(network.Network):
     def get_artifacts(self):
         project_node = self.get_project_node()
         if project_node is None:
-            print("Error: project node not found")
+            print(functions.log_time(), "Error: project node not found")
             return
         project_artifacts = nx.ego_graph(self.graph, project_node[0], center=False)
         # Graph of all artifacts, without the project node (all relations should be "Depends")
