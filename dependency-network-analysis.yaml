@@ -1,0 +1,28 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Dependency Network Analysis
+  description: Microservice applying social network analysis to Java Maven artifact dependency networks.
+  license:
+paths:
+  /artifacts/{owner}/{repo}:
+    get:
+      description: Returns the artifacts for the project
+      responses:
+        '200':
+          description: Returns all the artifacts for the project
+          content:
+            application/json:
+              schema:
+                type: array
+        '404':
+          description: The project cannot be found
+  /artifacts/pageranks:
+    get:
+      description: Returns the artifatcs and their pagerank
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
