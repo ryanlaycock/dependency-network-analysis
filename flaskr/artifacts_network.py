@@ -1,5 +1,6 @@
 import network
 import networkx as nx
+import functions
 
 
 class ArtifactsNetwork(network.Network):
@@ -10,12 +11,12 @@ class ArtifactsNetwork(network.Network):
         network.Network.__init__(self)
         records = self.__fetch_data()
         self.neo4j_to_network_artifact(records)
-        print("Fetched data and built graph.")
+        print(functions.log_time(), "Fetched data and built graph.")
         self.__page_rank = self.compute_pagerank()
-        print("Calculated pagerank.")
+        print(functions.log_time(), "Calculated pagerank.")
 
     def __fetch_data(self):
-        print("Fetching artifacts")
+        print(functions.log_time(), "Fetching artifacts")
         query = ("MATCH p=(:Artifact)"
                  "UNWIND nodes(p) as allnodes WITH COLLECT(ID(allnodes)) AS ALLID "
                  "MATCH (a)-[r2]-(b) "
@@ -30,13 +31,16 @@ class ArtifactsNetwork(network.Network):
         artifacts = {}
         pagerank = nx.pagerank(self.graph)
         sorted_pagerank = sorted(pagerank.items(), key=lambda x: x[1], reverse=True)  # Sort descending
-        rank = 1
+        rank = 0
+        last_rank_val = None
         for id, pr in sorted_pagerank:
+            if last_rank_val != pagerank[id]:  # Only increment if the pagerank value is different ie. not joint rank
+                rank += 1
+            last_rank_val = pagerank[id]
             artifacts[id] = {
                 "pagerank": pagerank[id],
                 "overall_rank": rank,
             }
-            rank += 1
         return artifacts
 
     def neo4j_to_network_artifact(self, records):

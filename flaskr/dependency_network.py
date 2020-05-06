@@ -1,5 +1,6 @@
 import network
 import networkx as nx
+import functions
 
 
 class DependencyNetwork(network.Network):
@@ -14,18 +15,18 @@ class DependencyNetwork(network.Network):
         self.neo4j_to_network(dependents)
 
     def __fetch_dependency_data(self, project_name):
-        print("Fetching dependencies.")
+        print(functions.log_time(), "Fetching dependencies.")
         # Dependencies
         query = ("MATCH p = (parent:Project{id:$projectName})"
-                 "-[:Contains]->(child:Artifact)"
-                 "-[:Depends*0..5]->(dep:Artifact) " + self.query_end)
+                 "-[:Contains*0..1]->(child:Artifact)"
+                 "-[:Depends*0..2]->(dep:Artifact) " + self.query_end)
 
         with self.db_driver.session() as session:
             result = session.run(query, parameters={"projectName": project_name})
             return result.records()
 
     def __fetch_dependent_data(self, project_name):
-        print("Fetching dependents.")
+        print(functions.log_time(), "Fetching dependents.")
         # Dependent projects
         query = ("MATCH p = (parent:Project{id:$projectName})"
                  "-[:Contains*0..1]->(child:Artifact)"
@@ -38,7 +39,7 @@ class DependencyNetwork(network.Network):
     def get_artifacts(self):
         project_node = self.get_project_node()
         if project_node is None:
-            print("Error: project node not found")
+            print(functions.log_time(), "Error: project node not found")
             return
         project_artifacts = nx.ego_graph(self.graph, project_node[0], center=False)
         # Graph of all artifacts, without the project node (all relations should be "Depends")
@@ -55,11 +56,12 @@ class DependencyNetwork(network.Network):
             project_artifact_details[project_artifact]["internal_id"] = project_artifact
             if self.graph.nodes[project_artifact]["type"] == "Artifact":
                 # Outgoing nodes from artifact (dependencies)
-                artifact_dependencies = nx.ego_graph(self.graph, project_artifact, center=False)
+                artifact_dependencies = nx.ego_graph(self.graph, project_artifact, center=False, radius=1)
                 # Direct dependencies
                 for artifact_dependency in artifact_dependencies:
                     if self.graph.nodes[artifact_dependency]["type"] == "Artifact" \
-                            and artifact_dependency not in direct_dependencies:
+                            and artifact_dependency not in direct_dependencies \
+                            and artifact_dependency not in project_artifacts:
                         direct_dependencies[artifact_dependency] = self.graph.nodes[artifact_dependency]
                         direct_dependencies[artifact_dependency]["internal_id"] = artifact_dependency
 
@@ -72,10 +74,9 @@ class DependencyNetwork(network.Network):
                         dependents[artifact_dependent]["internal_id"] = artifact_dependent
 
         # Search all nodes for nodes not direct dependency or project artifact
-        # Artifact can be transitive dependency AND dependent so no need to check that dict
         for artifact in graph_of_artifacts_only:
             if self.graph.nodes[artifact]["type"] == "Artifact" and artifact not in direct_dependencies \
-                    and artifact not in project_artifact_details:
+                    and artifact not in project_artifact_details and artifact not in dependents:
                 transitive_dependencies[artifact] = self.graph.nodes[artifact]
                 transitive_dependencies[artifact]["internal_id"] = artifact
 
