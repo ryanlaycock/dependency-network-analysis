@@ -31,4 +31,4 @@ def get_project_artifacts(owner, repo):
 
 if __name__ == '__main__':
     print(functions.log_time(), "Starting dependency network analysis!")
-    app.run(host='0.0.0.0', port='5001', debug=True)
+    app.run(host='0.0.0.0', debug=True)
